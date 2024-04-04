@@ -1,0 +1,23 @@
+[package]
+name = "PacoDB"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = "0.7.4"
+protobuf = "2"
+rand = "0.9.0-alpha.1"
+regex = "1.10.4"
+serde_json = "1.0.115"
+serde = { version = "1.0.197", features = ["derive"] }
+tokio = { version = "1.35.1", features = ["full"] }
+tracing-subscriber = "0.3.18"
+raft = { version = "0.7.0" }
+tracing = "0.1.40"
+slog = "2.2"
+slog-async = "2.3.0"
+slog-envlogger = { version = "2.1.0", optional = true }
+slog-stdlog = { version = "4", optional = true }
+slog-term = "2.4.0"
