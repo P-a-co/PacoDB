@@ -1,7 +1,3 @@
-// Copyright 2019 TiKV Project Authors. Licensed under Apache-2.0.
-
-// We use `default` method a lot to be support prost and rust-protobuf at the
-// same time. And reassignment can be optimized by compiler.
 #![allow(clippy::field_reassign_with_default)]
 use axum::extract::{Path, State};
 use axum::{
@@ -57,7 +53,7 @@ impl Database {
     pub async fn update(&mut self, id: String, value: Value) -> bool {
         let (proposal, rx) = Proposal::normal("update".to_owned(), id, value);
         self.proposals.lock().unwrap().push_back(proposal);
-        // After we got a response from `rx`, we can assume the put succeeded and following
+        // After we got a response from `rx`, we can assume the update succeeded and following
         // `get` operations can find the key-value pair.
         rx.recv().unwrap()
     }
@@ -65,7 +61,7 @@ impl Database {
     pub async fn delete(&mut self, id: String) -> bool {
         let (proposal, rx) = Proposal::normal("delete".to_owned(), id, Value::Null);
         self.proposals.lock().unwrap().push_back(proposal);
-        // After we got a response from `rx`, we can assume the put succeeded and following
+        // After we got a response from `rx`, we can assume the delete succeeded and following
         // `get` operations can find the key-value pair.
         rx.recv().unwrap()
     }
@@ -114,7 +110,7 @@ async fn main() {
 
     let mut handles = Vec::new();
     for (i, rx) in rx_vec.into_iter().enumerate() {
-        // A map[peer_id -> sender]. In the example we create 5 nodes, with ids in [1, 5].
+        // A map[peer_id -> sender]. Here we create 5 nodes, with ids in [1, 5].
         let mailboxes = (1..6u64).zip(tx_vec.iter().cloned()).collect();
         let mut node = match i {
             // Peer 1 is the leader.
@@ -183,16 +179,15 @@ async fn main() {
     // Propose some conf changes so that followers can be initialized.
     add_all_followers(db.proposals.as_ref());
 
-    let port = 49494; //rand::thread_rng().gen_range(49152..65535);
+    let port = 49494;
 
     let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{}", port))
         .await
         .unwrap();
     tracing::info!("listening on {}", listener.local_addr().unwrap());
 
-    // build our application with a route
+    // build application-route for receiving and transmitting data
     let app = Router::new()
-        // `GET /` goes to `root`
         .route("/:id", get(fetch_entry).delete(delete_entry))
         .route("/", put(create_entry).post(update_entry))
         .with_state(db);
@@ -211,7 +206,6 @@ async fn delete_entry(mut db: State<Database>, Path(id): Path<String>) -> Json<b
     Json(db.delete(id).await)
 }
 async fn fetch_entry(mut db: State<Database>, Path(id): Path<String>) -> Json<DTO> {
-    //String::from("your mom")
     Json(db.fetch(id).await)
 }
 
@@ -459,7 +453,7 @@ fn is_initial_msg(msg: &Message) -> bool {
 
 #[derive(Debug)]
 pub struct Proposal {
-    normal: Option<(String, String, Value)>, // key is a String integer, and value is a json value.
+    normal: Option<(String, String, Value)>, // command to execute sent as a String, key is a String , and value is a json value.
     conf_change: Option<ConfChange>,       // conf change.
     transfer_leader: Option<u64>,
     // If it's proposed, it will be set to the index of the entry.
