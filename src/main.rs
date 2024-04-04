@@ -4,20 +4,14 @@
 // same time. And reassignment can be optimized by compiler.
 #![allow(clippy::field_reassign_with_default)]
 use axum::extract::{Path, State};
-use axum::routing::post;
 use axum::{
-    http::StatusCode,
-    response::IntoResponse,
-    routing::{get, put},
+    routing::{put, get},
     Json, Router,
 };
 use slog::Drain;
 use std::collections::{HashMap, VecDeque};
-use std::io::ErrorKind::NotFound;
-use std::ops::Deref;
 use std::sync::mpsc::{self, Receiver, Sender, SyncSender, TryRecvError};
 use std::sync::{Arc, Mutex};
-use std::thread::{sleep, JoinHandle};
 use std::time::{Duration, Instant};
 use std::{str, thread};
 
@@ -25,9 +19,8 @@ use std::{str, thread};
 use protobuf::Message as PbMessage;
 use raft::storage::MemStorage;
 use raft::{prelude::*, StateRole};
-use rand::Rng;
 use regex::Regex;
-use serde_json::{Result, Value};
+use serde_json::Value;
 
 use serde::{Deserialize, Serialize};
 use slog::{error, info, o};
@@ -95,7 +88,7 @@ impl Database {
 async fn main() {
     // initialize tracing
     tracing_subscriber::fmt::init();
-    let mut db = Database::init().await;
+    let db = Database::init().await;
 
     const NUM_NODES: u32 = 5;
     // Create 5 mailboxes to send/receive messages. Every node holds a `Receiver` to receive
@@ -107,7 +100,7 @@ async fn main() {
         rx_vec.push(rx);
     }
 
-    let (tx_stop, rx_stop) = mpsc::channel();
+    let (_tx_stop, rx_stop) = mpsc::channel();
     let rx_stop = Arc::new(Mutex::new(rx_stop));
 
     let decorator = slog_term::TermDecorator::new().build();
