@@ -62,7 +62,7 @@ impl Database {
         let (proposal, rx) = Proposal::normal("delete".to_owned(), id, Value::Null);
         self.proposals.lock().unwrap().push_back(proposal);
         // After we got a response from `rx`, we can assume the delete succeeded and following
-        // `get` operations can find the key-value pair.
+        // `get` operations can't find the key-value pair.
         rx.recv().unwrap()
     }
 
